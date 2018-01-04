@@ -1,0 +1,71 @@
+---
+- hosts: all
+  remote_user: xyz
+  tasks:
+
+## Take Process backup ##
+
+   - name: Take Process backup
+     shell: ps -ef |grep java |grep " 1 "|awk '{print $1,$2,$3,$5,$(NF-3),$NF }' >/home/process_bkp.txt
+   
+
+## Stop Node Agent ##
+
+   - name: restart Node Agent
+     shell: cat /home/process_bkp.txt |sed 's/config/bin/g' |grep -w nodeagent |awk -F " " '{print $5}'
+     register: restarts
+
+
+   - name: Stop Node agents
+     shell: sh "{{ item }}"/stopNode.sh
+     with_items: "{{ restarts.stdout.split() }}"
+     when: item > 1
+
+## Stop Server ##
+
+   - name: Websphare stop
+     shell: cat /home//process_bkp.txt |sed 's/config/bin/g'|awk -F " " '{print $5,$6}' |egrep -v "nodeagent|dmgr|process_bkp.txt"  |awk -F " " '{print $1"/stopServer.sh",""$2}'
+     register: stopSer
+     
+   - name: Stop Server
+     shell: "{{ item }}"
+     with_items: "{{ stopSer.stdout_lines }}"
+     when: item > 1     
+
+## Restart DMGR ##
+
+   - name: Restart DMGR
+     shell: cat /home/process_bkp.txt |sed 's/config/bin/g'|awk -F " " '{print $5,$6}' |grep -w dmgr |awk  -F " " '{print $1}'
+     register: rstrmgr
+
+## Stop DMGR ##
+
+   - name: Stop manager
+     shell: sh "{{ item }}"/stopManager.sh
+     with_items: "{{ rstrmgr.stdout.split() }}"
+     when: item > 1
+
+## Start DMGR ##
+
+   - name: Start manager
+     shell: sh "{{ item }}"/startManager.sh
+     with_items: "{{ rstrmgr.stdout.split() }}"
+     when: item > 1
+
+## Start Node Agents ##
+
+   - name: Start Node agents
+     shell: sh "{{ item }}"/startNode.sh
+     with_items: "{{ restarts.stdout.split() }}"
+     when: item > 1
+
+## Start Servers ##
+
+   - name: Websphare start
+     shell: cat /home/process_bkp.txt |sed 's/config/bin/g'|awk -F " " '{print $5,$6}' |egrep -v "nodeagent|dmgr|process_bkp.txt"  |awk -F " " '{print $1"/startServer.sh",""$2}'
+     register: strtSer
+
+   - name: Start Server
+     shell: "{{ item  }}"
+     with_items: "{{ strtSer.stdout_lines }}"
+     when: item > 1
