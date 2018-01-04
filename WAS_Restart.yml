@@ -1,18 +1,18 @@
 ---
 - hosts: all
-  remote_user: ib0328a5
+  remote_user: xyz
   tasks:
 
 ## Take Process backup ##
 
    - name: Take Process backup
-     shell: ps -ef |grep java |grep " 1 "|awk '{print $1,$2,$3,$5,$(NF-3),$NF }' >/home/ib0328a5/process_bkp.txt
+     shell: ps -ef |grep java |grep " 1 "|awk '{print $1,$2,$3,$5,$(NF-3),$NF }' >/home/process_bkp.txt
    
 
 ## Stop Node Agent ##
 
    - name: restart Node Agent
-     shell: cat /home/ib0328a5/process_bkp.txt |sed 's/config/bin/g' |grep -w nodeagent |awk -F " " '{print $5}'
+     shell: cat /home/process_bkp.txt |sed 's/config/bin/g' |grep -w nodeagent |awk -F " " '{print $5}'
      register: restarts
 
 
@@ -24,7 +24,7 @@
 ## Stop Server ##
 
    - name: Websphare stop
-     shell: cat /home/ib0328a5/process_bkp.txt |sed 's/config/bin/g'|awk -F " " '{print $5,$6}' |egrep -v "nodeagent|dmgr|process_bkp.txt"  |awk -F " " '{print $1"/stopServer.sh",""$2}'
+     shell: cat /home//process_bkp.txt |sed 's/config/bin/g'|awk -F " " '{print $5,$6}' |egrep -v "nodeagent|dmgr|process_bkp.txt"  |awk -F " " '{print $1"/stopServer.sh",""$2}'
      register: stopSer
      
    - name: Stop Server
@@ -35,7 +35,7 @@
 ## Restart DMGR ##
 
    - name: Restart DMGR
-     shell: cat /home/ib0328a5/process_bkp.txt |sed 's/config/bin/g'|awk -F " " '{print $5,$6}' |grep -w dmgr |awk  -F " " '{print $1}'
+     shell: cat /home/process_bkp.txt |sed 's/config/bin/g'|awk -F " " '{print $5,$6}' |grep -w dmgr |awk  -F " " '{print $1}'
      register: rstrmgr
 
 ## Stop DMGR ##
@@ -62,7 +62,7 @@
 ## Start Servers ##
 
    - name: Websphare start
-     shell: cat /home/ib0328a5/process_bkp.txt |sed 's/config/bin/g'|awk -F " " '{print $5,$6}' |egrep -v "nodeagent|dmgr|process_bkp.txt"  |awk -F " " '{print $1"/startServer.sh",""$2}'
+     shell: cat /home/process_bkp.txt |sed 's/config/bin/g'|awk -F " " '{print $5,$6}' |egrep -v "nodeagent|dmgr|process_bkp.txt"  |awk -F " " '{print $1"/startServer.sh",""$2}'
      register: strtSer
 
    - name: Start Server
